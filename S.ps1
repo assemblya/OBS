@@ -48,6 +48,36 @@ function Run-BAMParser {
     $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
 }
 
+function Run-RedLotusBam {
+    Clear-Host
+    Write-Host "Running Red Lotus BAM..." -ForegroundColor Magenta
+    Write-Host "This may take a moment." -ForegroundColor DarkGray
+    Write-Host ""
+
+    $job = Start-Job -ScriptBlock {
+        Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
+        Invoke-Expression (Invoke-RestMethod "https://raw.githubusercontent.com/PureIntent/ScreenShare/main/RedLotusBam.ps1")
+    }
+
+    $spinner = @("|", "/", "-", "\")
+    $i = 0
+
+    while ($job.State -eq "Running") {
+        Write-Host -NoNewline "`rScanning $($spinner[$i % $spinner.Count])"
+        Start-Sleep -Milliseconds 150
+        $i++
+    }
+
+    Receive-Job $job | Out-Host
+    Remove-Job $job
+
+    Write-Host ""
+    Write-Host "✔ Red Lotus BAM completed." -ForegroundColor Green
+    Write-Host ""
+    Write-Host "Press any key to return..." -ForegroundColor Yellow
+    $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+}
+
 function Run-FullSigCheck {
     Clear-Host
     Write-Host "Running Full sig check..." -ForegroundColor Cyan
@@ -84,6 +114,7 @@ function Show-RedLotusPage {
         Write-Host "===== Red Lotus Tools =====" -ForegroundColor Magenta
         Write-Host ""
         Write-Host " [1] Run BAM Parser" -ForegroundColor Cyan
+        Write-Host " [2] Run Red Lotus BAM" -ForegroundColor Cyan
         Write-Host " [B] Back to Main Menu" -ForegroundColor Yellow
         Write-Host " [Q] Quit" -ForegroundColor Red
         Write-Host ""
@@ -92,6 +123,7 @@ function Show-RedLotusPage {
 
         switch ($choice.ToUpper()) {
             "1" { Run-BAMParser }
+            "2" { Run-RedLotusBam }
             "B" { return }
             "Q" { exit }
         }
