@@ -1,3 +1,6 @@
+$ErrorActionPreference = "SilentlyContinue"
+Set-ExecutionPolicy -Scope Process Bypass -Force
+
 $whitelist = (Invoke-WebRequest `
   -Uri "https://raw.githubusercontent.com/assemblya/OBS/main/whitelisted.txt" `
   -UseBasicParsing).Content `
@@ -8,7 +11,7 @@ $drives = Get-PSDrive -PSProvider FileSystem |
           Where-Object { $_.Root -and (Test-Path $_.Root) }
 
 $results = foreach ($drive in $drives) {
-    Get-ChildItem $drive.Root -Recurse -File -Filter *.exe -ErrorAction SilentlyContinue |
+    Get-ChildItem $drive.Root -Recurse -File -Filter *.exe |
     Where-Object {
         $path = $_.FullName
         if ($whitelist -contains $path) { return $false }
