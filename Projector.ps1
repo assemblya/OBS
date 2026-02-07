@@ -10,10 +10,17 @@ $drives = Get-PSDrive -PSProvider FileSystem |
 $results = foreach ($drive in $drives) {
     Get-ChildItem $drive.Root -Recurse -File -Filter *.exe -ErrorAction SilentlyContinue |
     Where-Object {
-        -not ($whitelist -contains $_.FullName) -and
-        -not (Get-AuthenticodeSignature $_.FullName).SignerCertificate
+        $path = $_.FullName
+        if ($whitelist -contains $path) { return $false }
+        try {
+            $sig = Get-AuthenticodeSignature $path -ErrorAction Stop
+            -not $sig.SignerCertificate
+        } catch {
+            $false
+        }
     } |
     Select-Object -ExpandProperty FullName
 }
 
-$results | Out-File "$env:USERPROFILE\Desktop\UnsignedEXEs_Filtered.txt"
+$downloads = (New-Object -ComObject Shell.Application).NameSpace('shell:Downloads').Self.Path
+$results | Out-File "$downloads\UnsignedEXEs_Filtered.txt" -Encoding UTF8 -Force
